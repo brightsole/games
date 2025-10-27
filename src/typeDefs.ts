@@ -7,25 +7,24 @@ export default gql`
   extend schema
     @link(
       url: "https://specs.apollo.dev/federation/v2.0"
-      import: ["@key", "@shareable"]
+      import: ["@key", "@shareable", "@external"]
     )
 
-  type Affirmative {
-    ok: Boolean!
+  type Word @key(fields: "id") @external {
+    id: ID!
   }
 
-  type Item @key(fields: "id") {
+  type User @key(fields: "id") @external {
     id: ID!
-    name: String
-    description: String
+  }
+
+  type Game @key(fields: "id") @shareable {
+    id: ID!
+    words: [Word!]!
+    owners: [User!]!
+    publicReleaseDate: DateTime
     createdAt: DateTime
     updatedAt: DateTime
-  }
-
-  input UpdateItemInput {
-    id: String!
-    name: String
-    description: String
   }
 
   input QueryObject {
@@ -33,13 +32,11 @@ export default gql`
   }
 
   type Query {
-    item(id: ID!): Item
-    items(query: QueryObject!): [Item]
+    game(id: ID!): Game
+    games(query: QueryObject!): [Game]
   }
 
   type Mutation {
-    updateItem(input: UpdateItemInput!): Item
-    createItem(name: String, description: String): Item
-    deleteItem(id: String!): Affirmative
+    submitGame(words: [String!]!): Game
   }
 `;

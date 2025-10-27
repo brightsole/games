@@ -2,7 +2,7 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
   schema: 'src/typeDefs.ts',
-  documents: ['src/**/*.ts', '!src/generated/**/*'],
+  documents: ['!src/generated/**/*'],
   generates: {
     'src/generated/graphql.ts': {
       plugins: ['typescript', 'typescript-resolvers'],
@@ -12,6 +12,9 @@ const config: CodegenConfig = {
         scalars: {
           DateTime: 'Date',
           JSONObject: 'Record<string, unknown>',
+        },
+        mappers: {
+          Game: '../types#DBGame',
         },
         federation: true,
       },

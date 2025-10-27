@@ -1,61 +1,68 @@
 import { gql } from 'graphql-tag';
-import { nanoid } from 'nanoid';
+import { customAlphabet } from 'nanoid';
 import getGraphqlServer from '../test/getGraphqlServer';
+import type { createGameController } from '../src/gameController';
+
+// good ole motorCase
+const nanoid = customAlphabet('brumBRUM', 24);
+
+type GameController = ReturnType<typeof createGameController>;
 
 // INTEGRATION TEST OF THE FULL PATH
 // only test for completion of high level access
 // correct low level unit testing should be done on the resolver/util level
 
 describe('Resolver full path', () => {
-  it('creates an item without error', async () => {
+  it('submits a game without error', async () => {
     const server = getGraphqlServer();
 
-    const createItemMutation = gql`
-      mutation CreateItem($name: String, $description: String) {
-        createItem(name: $name, description: $description) {
+    const submitGameMutation = gql`
+      mutation SubmitGame($words: [String!]!) {
+        submitGame(words: $words) {
           id
-          name
-          description
+          words {
+            id
+          }
+          owners {
+            id
+          }
         }
       }
     `;
 
     const create = jest.fn();
-    const itemController = {
+    const gameController = {
       create,
       getById: jest.fn(),
       listByOwner: jest.fn(),
       update: jest.fn(),
-      remove: jest.fn(),
-    };
+    } satisfies Partial<GameController>;
 
-    const ownerId = 'that guy who makes things';
-
-    const name = 'the diner of despair';
-    const description =
-      'a horrible place where the clientelle go to get bitten, not a bite';
+    const ownerId = 'player-who-submits-games';
+    const words = ['cat', 'dog', 'fish'];
 
     create.mockResolvedValueOnce({
       id: nanoid(),
-      name,
-      description,
-      ownerId,
+      ownerIds: ownerId,
+      wordsKey: words.sort().join('|'),
+      words,
+      isDraft: true,
+      looksNaughty: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
     const { body } = await server.executeOperation(
       {
-        query: createItemMutation,
+        query: submitGameMutation,
         variables: {
-          name,
-          description,
+          words,
         },
       },
       {
         contextValue: {
           ownerId,
-          itemController,
+          gameController,
         },
       },
     );
@@ -68,8 +75,12 @@ describe('Resolver full path', () => {
 
     expect(singleResult.errors).toBeUndefined();
     expect(singleResult.data).toEqual({
-      createItem: { id: expect.any(String), name, description },
+      submitGame: {
+        id: expect.any(String),
+        words: [{ id: 'cat' }, { id: 'dog' }, { id: 'fish' }],
+        owners: [{ id: ownerId }],
+      },
     });
-    expect(create).toHaveBeenCalledWith({ name, description }, ownerId);
+    expect(create).toHaveBeenCalledWith({ words }, ownerId);
   });
 });

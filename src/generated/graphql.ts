@@ -1,5 +1,5 @@
 import type { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import type { Context } from '../types';
+import type { DBGame, Context } from '../types';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -20,56 +20,39 @@ export type Scalars = {
   _FieldSet: { input: any; output: any; }
 };
 
-export type Affirmative = {
-  __typename?: 'Affirmative';
-  ok: Scalars['Boolean']['output'];
-};
-
-export type Item = {
-  __typename?: 'Item';
+export type Game = {
+  __typename?: 'Game';
   createdAt?: Maybe<Scalars['DateTime']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  name?: Maybe<Scalars['String']['output']>;
+  owners: Array<User>;
+  publicReleaseDate?: Maybe<Scalars['DateTime']['output']>;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  words: Array<Word>;
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
-  createItem?: Maybe<Item>;
-  deleteItem?: Maybe<Affirmative>;
-  updateItem?: Maybe<Item>;
+  submitGame?: Maybe<Game>;
 };
 
 
-export type MutationCreateItemArgs = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type MutationDeleteItemArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-export type MutationUpdateItemArgs = {
-  input: UpdateItemInput;
+export type MutationSubmitGameArgs = {
+  words: Array<Scalars['String']['input']>;
 };
 
 export type Query = {
   __typename?: 'Query';
-  item?: Maybe<Item>;
-  items?: Maybe<Array<Maybe<Item>>>;
+  game?: Maybe<Game>;
+  games?: Maybe<Array<Maybe<Game>>>;
 };
 
 
-export type QueryItemArgs = {
+export type QueryGameArgs = {
   id: Scalars['ID']['input'];
 };
 
 
-export type QueryItemsArgs = {
+export type QueryGamesArgs = {
   query: QueryObject;
 };
 
@@ -77,10 +60,14 @@ export type QueryObject = {
   ownerId?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type UpdateItemInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  id: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
+export type User = {
+  __typename?: 'User';
+  id: Scalars['ID']['output'];
+};
+
+export type Word = {
+  __typename?: 'Word';
+  id: Scalars['ID']['output'];
 };
 
 
@@ -163,63 +150,68 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 
 /** Mapping of federation types */
 export type FederationTypes = {
-  Item: Item;
+  Game: Game;
+  User: User;
+  Word: Word;
 };
 
 /** Mapping of federation reference types */
 export type FederationReferenceTypes = {
-  Item:
-    ( { __typename: 'Item' }
-    & GraphQLRecursivePick<FederationTypes['Item'], {"id":true}> );
+  Game:
+    ( { __typename: 'Game' }
+    & GraphQLRecursivePick<FederationTypes['Game'], {"id":true}> );
+  User:
+    ( { __typename: 'User' }
+    & GraphQLRecursivePick<FederationTypes['User'], {"id":true}> );
+  Word:
+    ( { __typename: 'Word' }
+    & GraphQLRecursivePick<FederationTypes['Word'], {"id":true}> );
 };
 
 
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
-  Affirmative: ResolverTypeWrapper<Affirmative>;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
-  Item: ResolverTypeWrapper<Item>;
-  String: ResolverTypeWrapper<Scalars['String']['output']>;
+  Game: ResolverTypeWrapper<DBGame>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']['output']>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  String: ResolverTypeWrapper<Scalars['String']['output']>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   QueryObject: QueryObject;
-  UpdateItemInput: UpdateItemInput;
+  User: ResolverTypeWrapper<User>;
+  Word: ResolverTypeWrapper<Word>;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
-  Affirmative: Affirmative;
-  Boolean: Scalars['Boolean']['output'];
   DateTime: Scalars['DateTime']['output'];
-  Item: Item | FederationReferenceTypes['Item'];
-  String: Scalars['String']['output'];
+  Game: DBGame;
   ID: Scalars['ID']['output'];
   JSONObject: Scalars['JSONObject']['output'];
   Mutation: Record<PropertyKey, never>;
+  String: Scalars['String']['output'];
   Query: Record<PropertyKey, never>;
   QueryObject: QueryObject;
-  UpdateItemInput: UpdateItemInput;
-};
-
-export type AffirmativeResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Affirmative'] = ResolversParentTypes['Affirmative']> = {
-  ok?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  User: User | FederationReferenceTypes['User'];
+  Word: Word | FederationReferenceTypes['Word'];
+  Boolean: Scalars['Boolean']['output'];
 };
 
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
   name: 'DateTime';
 }
 
-export type ItemResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Item'] = ResolversParentTypes['Item'], FederationReferenceType extends FederationReferenceTypes['Item'] = FederationReferenceTypes['Item']> = {
-  __resolveReference?: ReferenceResolver<Maybe<ResolversTypes['Item']> | FederationReferenceType, FederationReferenceType, ContextType>;
+export type GameResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Game'] = ResolversParentTypes['Game'], FederationReferenceType extends FederationReferenceTypes['Game'] = FederationReferenceTypes['Game']> = {
+  __resolveReference?: ReferenceResolver<Maybe<ResolversTypes['Game']> | FederationReferenceType, FederationReferenceType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
-  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  owners?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
+  publicReleaseDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   updatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  words?: Resolver<Array<ResolversTypes['Word']>, ParentType, ContextType>;
 };
 
 export interface JsonObjectScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['JSONObject'], any> {
@@ -227,20 +219,17 @@ export interface JsonObjectScalarConfig extends GraphQLScalarTypeConfig<Resolver
 }
 
 export type MutationResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
-  createItem?: Resolver<Maybe<ResolversTypes['Item']>, ParentType, ContextType, Partial<MutationCreateItemArgs>>;
-  deleteItem?: Resolver<Maybe<ResolversTypes['Affirmative']>, ParentType, ContextType, RequireFields<MutationDeleteItemArgs, 'id'>>;
-  updateItem?: Resolver<Maybe<ResolversTypes['Item']>, ParentType, ContextType, RequireFields<MutationUpdateItemArgs, 'input'>>;
+  submitGame?: Resolver<Maybe<ResolversTypes['Game']>, ParentType, ContextType, RequireFields<MutationSubmitGameArgs, 'words'>>;
 };
 
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  item?: Resolver<Maybe<ResolversTypes['Item']>, ParentType, ContextType, RequireFields<QueryItemArgs, 'id'>>;
-  items?: Resolver<Maybe<Array<Maybe<ResolversTypes['Item']>>>, ParentType, ContextType, RequireFields<QueryItemsArgs, 'query'>>;
+  game?: Resolver<Maybe<ResolversTypes['Game']>, ParentType, ContextType, RequireFields<QueryGameArgs, 'id'>>;
+  games?: Resolver<Maybe<Array<Maybe<ResolversTypes['Game']>>>, ParentType, ContextType, RequireFields<QueryGamesArgs, 'query'>>;
 };
 
 export type Resolvers<ContextType = Context> = {
-  Affirmative?: AffirmativeResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
-  Item?: ItemResolvers<ContextType>;
+  Game?: GameResolvers<ContextType>;
   JSONObject?: GraphQLScalarType;
   Mutation?: MutationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;

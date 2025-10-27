@@ -1,35 +1,33 @@
 import { GraphQLDateTime, GraphQLJSONObject } from 'graphql-scalars';
-import type { Resolvers } from './generated/graphql';
 import type { Context } from './types';
+import { Resolvers } from './generated/graphql';
 
 const resolvers: Resolvers<Context> = {
   Query: {
-    item: async (_parent, { id }, { itemController }) =>
-      itemController.getById(id),
-    // for extra security, we could ignore the props passed in, and instead only grab items that belong to
-    // the ownerId passed in the headers. This could also be overly limiting if items aren't private
-    items: async (_parent, { query: { ownerId } }, { itemController }) =>
-      itemController.listByOwner(ownerId),
+    game: async (_parent, { id }, { gameController }) =>
+      gameController.getById(id),
+
+    games: async (_parent, { query: { ownerId } }, { gameController }) =>
+      gameController.listByOwner(ownerId),
   },
 
   Mutation: {
-    createItem: async (
-      _parent,
-      { name, description },
-      { ownerId, itemController },
-    ) => itemController.create({ name, description }, ownerId),
-
-    updateItem: async (_parent, { input }, { ownerId, itemController }) =>
-      itemController.update(input, ownerId),
-
-    deleteItem: async (_parent, { id }, { ownerId, itemController }) =>
-      itemController.remove(id, ownerId),
+    submitGame: async (_parent, { words }, { ownerId, gameController }) =>
+      gameController.create({ words }, ownerId),
   },
 
-  Item: {
-    // for finding out the info of the other items in the system
-    __resolveReference: async ({ id }, { itemController }) =>
-      itemController.getById(id),
+  Game: {
+    // for finding out the info of the other games in the system
+    __resolveReference: async ({ id }, { gameController }) =>
+      gameController.getById(id),
+
+    words: (parent, _args, _context) =>
+      parent.words.map((word: string) => ({ __typename: 'Word', id: word })),
+
+    owners: (parent, _args, _context) =>
+      parent.ownerIds
+        .split('|')
+        .map((ownerId: string) => ({ __typename: 'User', id: ownerId })),
   },
 
   DateTime: GraphQLDateTime,

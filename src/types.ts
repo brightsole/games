@@ -5,7 +5,7 @@ import type {
   APIGatewayProxyEventV2,
   APIGatewayProxyEvent,
 } from 'aws-lambda';
-import { createItemController } from './itemController';
+import { createGameController } from './gameController';
 
 export type GatewayEvent = APIGatewayProxyEvent | APIGatewayProxyEventV2;
 
@@ -14,19 +14,22 @@ export interface LambdaContextFunctionArgument {
   context: LambdaContext;
 }
 
-export type DBItem = DynamooseItem & {
+export type DBGame = DynamooseItem & {
   id: string;
-  ownerId: string;
-  name?: string | null;
-  description?: string | null;
-  createdAt?: Date | null;
-  updatedAt?: Date | null;
+  ownerIds: string;
+  wordsKey: string;
+  words: string[];
+  isDraft: boolean;
+  looksNaughty: boolean;
+  publishDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
-export type ModelType = Model<DBItem>;
+export type ModelType = Model<DBGame>;
 
 export type Context = {
-  itemController: ReturnType<typeof createItemController>;
+  gameController: ReturnType<typeof createGameController>;
   ownerId?: string;
   event: unknown;
 };

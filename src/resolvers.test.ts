@@ -1,215 +1,232 @@
-import { startController } from './itemController';
+import { startController } from './gameController';
 import resolvers from './resolvers';
-import type { DBItem } from './types';
+import type { DBGame, Context } from './types';
+import type { GraphQLResolveInfo } from 'graphql';
 
-const defaultItem = {
-  id: 'niner',
-  ownerId: 'owner',
-  name: 'Niner',
-  description: 'My favorite number',
+const defaultGame = {
+  id: 'bRUMbrumBRUM',
+  ownerIds: 'owner-123',
+  wordsKey: 'cat|dog|fish',
+  words: ['cat', 'dog', 'fish'],
+  isDraft: true,
+  looksNaughty: false,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-01-02T00:00:00.000Z'),
-} as unknown as DBItem;
+} as unknown as DBGame;
 
-type ResolverFunction = (
-  parent: unknown,
-  args: Record<string, unknown>,
-  context: Record<string, unknown>,
-  info: unknown,
-) => unknown;
-
-const callResolver = async (
-  resolver: unknown,
-  args: Record<string, unknown>,
-  context: Record<string, unknown>,
-) => {
-  if (!resolver) throw new Error('Resolver is undefined');
-  const fn = resolver as ResolverFunction;
-  return fn(undefined, args, context, undefined);
-};
-
-const createItemControllerMock = (
+const createGameControllerMock = (
   overrides: Partial<ReturnType<typeof startController>> = {},
 ): ReturnType<typeof startController> => ({
   getById: jest.fn().mockResolvedValue(undefined),
   listByOwner: jest.fn().mockResolvedValue([]),
-  create: jest.fn().mockResolvedValue(defaultItem),
-  update: jest.fn().mockResolvedValue(defaultItem),
-  remove: jest.fn().mockResolvedValue({ ok: true }),
+  create: jest.fn().mockResolvedValue(defaultGame),
+  update: jest.fn().mockResolvedValue(defaultGame),
   ...overrides,
 });
 
-const Query = resolvers.Query!;
-const Mutation = resolvers.Mutation!;
+// Mock GraphQL info object
+const mockInfo = {} as GraphQLResolveInfo;
+
+// Helper to call resolver whether it's a function or has a resolve property
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const callResolver = async (
+  resolver: any,
+  parent: any,
+  args: any,
+  context: any,
+) => {
+  if (typeof resolver === 'function') {
+    return resolver(parent, args, context, mockInfo);
+  }
+  if (resolver?.resolve) {
+    return resolver.resolve(parent, args, context, mockInfo);
+  }
+  throw new Error('Invalid resolver type');
+};
 
 describe('Resolvers', () => {
   describe('Query', () => {
-    it('fetches an item given an id', async () => {
-      const itemController = createItemControllerMock({
-        getById: jest.fn().mockResolvedValue(defaultItem),
+    it('fetches a game given an id', async () => {
+      const gameController = createGameControllerMock({
+        getById: jest.fn().mockResolvedValue(defaultGame),
       });
 
-      const item = await callResolver(
-        Query.item,
-        { id: 'niner' },
-        { itemController, event: {} },
+      const context: Context = {
+        gameController,
+        event: {},
+      };
+
+      const game = await callResolver(
+        resolvers.Query!.game!,
+        {},
+        { id: 'bRUMbrumBRUM' },
+        context,
       );
 
-      expect(item).toEqual(defaultItem);
-      expect(itemController.getById).toHaveBeenCalledWith('niner');
+      expect(game).toEqual(defaultGame);
+      expect(gameController.getById).toHaveBeenCalledWith('bRUMbrumBRUM');
     });
 
-    it('returns null for an unknown item', async () => {
-      const itemController = createItemControllerMock({
+    it('returns null for an unknown game', async () => {
+      const gameController = createGameControllerMock({
         getById: jest.fn().mockResolvedValue(undefined),
       });
 
-      const item = await callResolver(
-        Query.item,
-        { id: 'niner' },
-        { itemController, event: {} },
+      const context: Context = {
+        gameController,
+        event: {},
+      };
+
+      const game = await callResolver(
+        resolvers.Query!.game!,
+        {},
+        { id: 'nonexistent' },
+        context,
       );
-      expect(item).toBeUndefined();
+
+      expect(game).toBeUndefined();
     });
 
-    it('lists items for an owner', async () => {
+    it('lists games for an owner', async () => {
       const results = [
         {
-          id: 'niner',
-          ownerId: 'you',
-          createdAt: new Date('2024-01-01T00:00:00.000Z'),
-          updatedAt: new Date('2024-01-03T00:00:00.000Z'),
+          ...defaultGame,
+          id: 'game1',
+          ownerIds: 'you|other',
         },
         {
-          id: 'five',
-          ownerId: 'you',
-          createdAt: new Date('2024-01-01T00:00:00.000Z'),
-          updatedAt: new Date('2024-01-03T00:00:00.000Z'),
+          ...defaultGame,
+          id: 'game2',
+          ownerIds: 'you',
         },
-      ].map((item) => ({ ...defaultItem, ...item })) as unknown as DBItem[];
+      ] as unknown as DBGame[];
 
-      const itemController = createItemControllerMock({
+      const gameController = createGameControllerMock({
         listByOwner: jest.fn().mockResolvedValue(results),
       });
 
-      const items = await callResolver(
-        Query.items,
+      const context: Context = {
+        gameController,
+        event: {},
+      };
+
+      const games = await callResolver(
+        resolvers.Query!.games!,
+        {},
         { query: { ownerId: 'you' } },
-        { itemController, event: {} },
+        context,
       );
 
-      expect(items).toEqual(results);
-      expect(itemController.listByOwner).toHaveBeenCalledWith('you');
+      expect(games).toEqual(results);
+      expect(gameController.listByOwner).toHaveBeenCalledWith('you');
     });
   });
 
   describe('Mutation', () => {
-    it('creates an item when given valid data', async () => {
-      const create = jest.fn().mockResolvedValue(defaultItem);
-      const itemController = createItemControllerMock({ create });
+    it('creates a game when given valid words', async () => {
+      const create = jest.fn().mockResolvedValue(defaultGame);
+      const gameController = createGameControllerMock({ create });
 
-      const item = await callResolver(
-        Mutation.createItem,
-        { name: 'Niner', description: 'My favorite number' },
-        { itemController, event: {}, ownerId: 'yourself' },
+      const context: Context = {
+        gameController,
+        event: {},
+        ownerId: 'owner-123',
+      };
+
+      const game = await callResolver(
+        resolvers.Mutation!.submitGame!,
+        {},
+        { words: ['cat', 'dog', 'fish'] },
+        context,
       );
 
-      expect(item).toEqual(defaultItem);
+      expect(game).toEqual(defaultGame);
       expect(create).toHaveBeenCalledWith(
-        { name: 'Niner', description: 'My favorite number' },
-        'yourself',
+        { words: ['cat', 'dog', 'fish'] },
+        'owner-123',
       );
     });
 
     it('propagates create errors', async () => {
       const create = jest.fn().mockRejectedValue(new Error('Unauthorized'));
-      const itemController = createItemControllerMock({ create });
+      const gameController = createGameControllerMock({ create });
+
+      const context: Context = {
+        gameController,
+        event: {},
+      };
 
       await expect(
         callResolver(
-          Mutation.createItem,
-          { name: 'Niner', description: 'My favorite number' },
-          { itemController, event: {} },
+          resolvers.Mutation!.submitGame!,
+          {},
+          { words: ['cat', 'dog'] },
+          context,
         ),
       ).rejects.toThrow('Unauthorized');
     });
+  });
 
-    it('updates an item when given valid data', async () => {
-      const update = jest.fn().mockResolvedValue(defaultItem);
-      const itemController = createItemControllerMock({ update });
+  describe('Game field resolvers', () => {
+    it('resolves words field to Word objects', async () => {
+      const parent = { words: ['cat', 'dog', 'fish'] };
+      const context: Context = {
+        gameController: createGameControllerMock(),
+        event: {},
+      };
 
-      const item = await callResolver(
-        Mutation.updateItem,
-        {
-          input: {
-            id: 'niner',
-            name: 'Niner',
-            description: 'My favorite number',
-          },
-        },
-        { itemController, event: {}, ownerId: 'yourself' },
+      const words = await callResolver(
+        resolvers.Game!.words!,
+        parent,
+        {},
+        context,
       );
 
-      expect(item).toEqual(defaultItem);
-      expect(update).toHaveBeenCalledWith(
-        {
-          id: 'niner',
-          name: 'Niner',
-          description: 'My favorite number',
-        },
-        'yourself',
+      expect(words).toEqual([
+        { __typename: 'Word', id: 'cat' },
+        { __typename: 'Word', id: 'dog' },
+        { __typename: 'Word', id: 'fish' },
+      ]);
+    });
+
+    it('resolves owners field to User objects', async () => {
+      const parent = { ownerIds: 'owner1|owner2|owner3' };
+      const context: Context = {
+        gameController: createGameControllerMock(),
+        event: {},
+      };
+
+      const owners = await callResolver(
+        resolvers.Game!.owners!,
+        parent,
+        {},
+        context,
       );
+
+      expect(owners).toEqual([
+        { __typename: 'User', id: 'owner1' },
+        { __typename: 'User', id: 'owner2' },
+        { __typename: 'User', id: 'owner3' },
+      ]);
     });
 
-    it('propagates update errors', async () => {
-      const update = jest
-        .fn()
-        .mockRejectedValue(new Error('Item deleted or owned by another user'));
-      const itemController = createItemControllerMock({ update });
+    it('resolves reference to game', async () => {
+      const gameController = createGameControllerMock({
+        getById: jest.fn().mockResolvedValue(defaultGame),
+      });
 
-      await expect(
-        callResolver(
-          Mutation.updateItem,
-          {
-            input: {
-              id: 'niner',
-              name: 'Niner',
-              description: 'My favorite number',
-            },
-          },
-          { itemController, event: {}, ownerId: 'yourself' },
-        ),
-      ).rejects.toThrow('Item deleted or owned by another user');
-    });
+      // __resolveReference has different signature: (reference, context)
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      const resolveRef = resolvers.Game!.__resolveReference! as (
+        reference: { id: string },
+        context: { gameController: any },
+      ) => Promise<DBGame>;
+      /* eslint-enable @typescript-eslint/no-explicit-any */
 
-    it('deletes an item when given valid data', async () => {
-      const remove = jest.fn().mockResolvedValue({ ok: true });
-      const itemController = createItemControllerMock({ remove });
+      const game = await resolveRef({ id: 'bRUMbrumBRUM' }, { gameController });
 
-      await expect(
-        callResolver(
-          Mutation.deleteItem,
-          { id: 'niner' },
-          { itemController, event: {}, ownerId: 'yourself' },
-        ),
-      ).resolves.toEqual({ ok: true });
-
-      expect(remove).toHaveBeenCalledWith('niner', 'yourself');
-    });
-
-    it('propagates delete errors', async () => {
-      const remove = jest
-        .fn()
-        .mockRejectedValue(new Error('Conditional check failed'));
-      const itemController = createItemControllerMock({ remove });
-
-      await expect(
-        callResolver(
-          Mutation.deleteItem,
-          { id: 'niner' },
-          { itemController, event: {}, ownerId: 'yourself' },
-        ),
-      ).rejects.toThrow('Conditional check failed');
+      expect(game).toEqual(defaultGame);
+      expect(gameController.getById).toHaveBeenCalledWith('bRUMbrumBRUM');
     });
   });
 });

@@ -1,10 +1,10 @@
 import serverlessExpress from '@vendia/serverless-express';
 import express from 'express';
-import { startController } from './itemController';
+import { startController } from './gameController';
 
 export const createRestApp = () => {
   const app = express();
-  const itemController = startController();
+  const gameController = startController();
 
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -22,36 +22,34 @@ export const createRestApp = () => {
 
   app.use(express.json());
 
-  app.get('/items/:id', async (req, res) => {
-    const item = await itemController.getById(req.params.id);
-    res.json(item);
+  app.get('/games/:id', async (req, res) => {
+    const game = await gameController.getById(req.params.id);
+    res.json(game);
   });
 
-  app.get('/items', async (req, res) => {
+  app.get('/games', async (req, res) => {
     const ownerId = req.query.ownerId || req.header('x-user-id');
 
-    const items = await itemController.listByOwner(ownerId as string);
-    res.json(items);
+    const games = await gameController.listByOwner(ownerId as string);
+    res.json(games);
   });
 
-  app.post('/items', async (req, res) => {
-    const item = await itemController.create(req.body, req.header('id'));
-    res.status(201).json(item);
+  app.post('/games', async (req, res) => {
+    const game = await gameController.create(req.body, req.header('x-user-id'));
+    res.status(201).json(game);
   });
 
-  app.put('/items/:id', async (req, res) => {
-    const item = await itemController.update(
-      { id: req.params.id, ...req.body },
+  app.put('/games/:id', async (req, res) => {
+    const game = await gameController.update(
+      req.params.id,
+      req.body,
       req.header('x-user-id'),
     );
-
-    res.json(item);
+    res.json(game);
   });
 
-  app.delete('/items/:id', async (req, res) => {
-    const result = await itemController.remove(req.params.id, req.header('id'));
-    res.json(result);
-  });
+  // deleting would be dumb; people could just put it back
+  // and unpublishing is also bad, because then people lose their games
 
   return app;
 };

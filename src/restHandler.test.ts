@@ -1,11 +1,24 @@
 import http from 'node:http';
-import { nanoid } from 'nanoid';
-import { startController } from './itemController';
+import { customAlphabet } from 'nanoid';
+import { startController } from './gameController';
 import { createRestApp } from './restHandler';
 
-jest.mock('./itemController', () => ({
+// good ole motorCase
+const nanoid = customAlphabet('brumBRUM', 24);
+
+jest.mock('./gameController', () => ({
   startController: jest.fn(),
 }));
+
+// Mock dependencies for game controller
+jest.mock('./env', () => ({
+  default: {
+    hopsApiUrl: 'http://localhost:3001',
+    adminUserId: 'admin-123',
+  },
+}));
+
+global.fetch = jest.fn();
 
 const mockStartController = jest.mocked(startController);
 
@@ -16,17 +29,18 @@ const createControllerDouble = (
   getById: jest.fn().mockRejectedValue('unexpected getById'),
   listByOwner: jest.fn().mockRejectedValue('unexpected listByOwner'),
   update: jest.fn().mockRejectedValue('unexpected update'),
-  remove: jest.fn().mockRejectedValue('unexpected remove'),
   ...overrides,
 });
 
 describe('REST handler', () => {
-  it('creates an item without error', async () => {
+  it('creates a game without error', async () => {
     const create = jest.fn().mockResolvedValue({
       id: nanoid(),
-      name: 'threeve',
-      description: 'A combination of three and five; simply stunning',
-      ownerId: 'owner-1',
+      ownerIds: 'owner-1',
+      wordsKey: 'cat|dog|fish',
+      words: ['cat', 'dog', 'fish'],
+      isDraft: true,
+      looksNaughty: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -43,8 +57,7 @@ describe('REST handler', () => {
       throw new Error('Server failed to start');
 
     const payload = JSON.stringify({
-      name: 'threeve',
-      description: 'A combination of three and five; simply stunning',
+      words: ['cat', 'dog', 'fish'],
     });
 
     try {
@@ -54,12 +67,12 @@ describe('REST handler', () => {
             {
               hostname: '127.0.0.1',
               port: serverAddress.port,
-              path: '/items',
+              path: '/games',
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(payload),
-                id: 'owner-1',
+                'x-user-id': 'owner-1',
               },
             },
             (res) => {
@@ -86,15 +99,15 @@ describe('REST handler', () => {
       expect(data).toEqual(
         expect.objectContaining({
           id: expect.any(String),
-          name: 'threeve',
-          description: 'A combination of three and five; simply stunning',
-          ownerId: 'owner-1',
+          ownerIds: 'owner-1',
+          words: ['cat', 'dog', 'fish'],
+          isDraft: true,
+          looksNaughty: false,
         }),
       );
       expect(create).toHaveBeenCalledWith(
         {
-          name: 'threeve',
-          description: 'A combination of three and five; simply stunning',
+          words: ['cat', 'dog', 'fish'],
         },
         'owner-1',
       );

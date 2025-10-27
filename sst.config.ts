@@ -3,27 +3,29 @@
 export default $config({
   app(input) {
     return {
-      name: 'items-service',
+      name: 'games',
       removal: input?.stage === 'production' ? 'retain' : 'remove',
       protect: input?.stage === 'production',
       home: 'aws',
     };
   },
   async run() {
-    const itemsTable = new sst.aws.Dynamo('Items', {
+    const gamesTable = new sst.aws.Dynamo('Games', {
       fields: {
         id: 'string',
-        ownerId: 'string',
+        ownerIds: 'string',
+        wordsKey: 'string',
       },
       primaryIndex: { hashKey: 'id' },
       globalIndexes: {
-        ownerId: { hashKey: 'ownerId' },
+        ownerIds: { hashKey: 'ownerIds' },
+        wordsKey: { hashKey: 'wordsKey' },
       },
       deletionProtection: $app.stage === 'production',
     });
 
     const api = new sst.aws.ApiGatewayV2('Api', {
-      link: [itemsTable],
+      link: [gamesTable],
     });
 
     // new sst.aws.Cron('KeepWarmCron', {
@@ -39,17 +41,15 @@ export default $config({
     // });
 
     // Store the API URL as a CloudFormation output for federation lookup
-    new aws.ssm.Parameter('ItemsApiUrl', {
+    new aws.ssm.Parameter('GamesApiUrl', {
       name: `/sst/${$app.name}/${$app.stage}/api-url`,
       type: 'String',
       value: api.url,
       description: `API Gateway URL for ${$app.name} ${$app.stage}`,
     });
-    // roughly how to get the api url in fed gateway:
-    // const itemsApiUrl = await aws.ssm.getParameter({
-    //   name: `/sst/items-service/${$app.stage}/api-url`,
-    // });
-    // then you put it into the environment below
+    const hopsApiUrl = await aws.ssm.getParameter({
+      name: `/sst/words-service/${$app.stage}/api-url`,
+    });
 
     const functionConfig = {
       runtime: 'nodejs22.x',
@@ -59,7 +59,8 @@ export default $config({
         format: 'esm',
       },
       environment: {
-        TABLE_NAME: itemsTable.name,
+        TABLE_NAME: gamesTable.name,
+        HOPS_API_URL: hopsApiUrl.value,
       },
     } as const;
 
@@ -68,19 +69,19 @@ export default $config({
       handler: 'src/graphqlHandler.handler',
     });
 
-    api.route('ANY /items', {
+    api.route('ANY /games', {
       ...functionConfig,
       handler: 'src/restHandler.handler',
     });
 
-    api.route('ANY /items/{proxy+}', {
+    api.route('ANY /games/{proxy+}', {
       ...functionConfig,
       handler: 'src/restHandler.handler',
     });
 
     return {
       apiUrl: api.url,
-      usersTableName: itemsTable.name,
+      usersTableName: gamesTable.name,
     };
   },
 });
