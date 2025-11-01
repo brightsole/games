@@ -27,7 +27,7 @@ const createControllerDouble = (
 ): ReturnType<typeof startController> => ({
   create: jest.fn().mockRejectedValue('unexpected create'),
   getById: jest.fn().mockRejectedValue('unexpected getById'),
-  listByOwner: jest.fn().mockRejectedValue('unexpected listByOwner'),
+  query: jest.fn().mockRejectedValue('unexpected query'),
   update: jest.fn().mockRejectedValue('unexpected update'),
   ...overrides,
 });

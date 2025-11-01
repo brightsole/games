@@ -9,7 +9,7 @@ declare module "sst" {
       "type": "sst.aws.ApiGatewayV2"
       "url": string
     }
-    "Items": {
+    "Games": {
       "name": string
       "type": "sst.aws.Dynamo"
     }

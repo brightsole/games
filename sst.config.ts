@@ -15,11 +15,13 @@ export default $config({
         id: 'string',
         ownerIds: 'string',
         wordsKey: 'string',
+        releaseMonth: 'string',
       },
       primaryIndex: { hashKey: 'id' },
       globalIndexes: {
         ownerIds: { hashKey: 'ownerIds' },
         wordsKey: { hashKey: 'wordsKey' },
+        releaseMonth: { hashKey: 'releaseMonth' },
       },
       deletionProtection: $app.stage === 'production',
     });
@@ -80,7 +82,8 @@ export default $config({
     });
 
     return {
-      apiUrl: api.url,
+      graphApiUrl: api.url.apply((api) => `${api}/graphql`),
+      restApiUrl: api.url.apply((api) => `${api}/games`),
       usersTableName: gamesTable.name,
     };
   },

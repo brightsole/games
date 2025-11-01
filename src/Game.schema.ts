@@ -14,11 +14,17 @@ export default new Schema(
     wordsKey: {
       type: String,
       required: true,
-    },
+      index: { name: 'wordsKey', type: 'global' },
+    }, // same kind of horrible plurality thing, sorry
     publishDate: {
       type: Date,
       required: false,
     },
+    releaseMonth: {
+      type: String,
+      required: false,
+      index: { name: 'releaseMonth', type: 'global' },
+    }, // Format: YYYY-MM for efficient querying by month
     words: {
       type: Array,
       schema: [String],

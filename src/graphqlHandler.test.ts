@@ -34,7 +34,7 @@ describe('Resolver full path', () => {
     const gameController = {
       create,
       getById: jest.fn(),
-      listByOwner: jest.fn(),
+      query: jest.fn(),
       update: jest.fn(),
     } satisfies Partial<GameController>;
 

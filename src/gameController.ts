@@ -6,13 +6,24 @@ import type { DBGame, ModelType } from './types';
 import GameSchema from './Game.schema';
 import env from './env';
 import { normalizeWord } from './sanitize';
-import { MutationSubmitGameArgs } from './generated/graphql';
+import { GameQueryInput, MutationSubmitGameArgs } from './generated/graphql';
 
 // good ole motorCase
 const nanoid = customAlphabet('brumBRUM', 24);
 const cache = new LRUCache<string, DBGame>({
   max: 1000,
 });
+
+const buildScan = (queryObject: Record<string, string | null>) =>
+  Object.entries(queryObject).reduce((acc, [key, value]) => {
+    // also, these act as a filter. other properties are ignored
+    if (!value) return acc;
+
+    if (key === 'ownerId') return { ...acc, ownerIds: { contains: value } };
+    if (key === 'word') return { ...acc, wordsKey: { contains: value } };
+
+    return acc;
+  }, {});
 
 export const createGameController = (GameModel: ModelType) => ({
   getById: async (id: string) => {
@@ -24,8 +35,16 @@ export const createGameController = (GameModel: ModelType) => ({
     return game;
   },
 
-  listByOwner: (ownerId?: string | null) =>
-    GameModel.query('ownerIds').contains(ownerId).using('ownerIds').exec(),
+  query: async (query: GameQueryInput) => {
+    if (query.releaseMonth) {
+      return await GameModel.query('releaseMonth')
+        .eq(query.releaseMonth)
+        .using('releaseMonth')
+        .exec();
+    }
+
+    return GameModel.scan(buildScan(query)).exec();
+  },
 
   create: async (input: MutationSubmitGameArgs, ownerId?: string) => {
     if (!ownerId) throw new Error('Unauthorized');
@@ -34,10 +53,9 @@ export const createGameController = (GameModel: ModelType) => ({
     const wordsKey = normalizedWords.sort().join('|');
 
     // first out: found existing game with these words.
-    const [existingGame] = await GameModel.query('wordsKey')
-      .eq(wordsKey)
-      .using('wordsKey')
-      .exec();
+    const [existingGame] = await GameModel.query({
+      wordsKey: { eq: wordsKey },
+    }).exec();
     const existingGameOwnerIds = existingGame
       ? existingGame.ownerIds.split('|')
       : [];
@@ -74,7 +92,7 @@ export const createGameController = (GameModel: ModelType) => ({
       ),
     );
     const anyPositiveLinks = hopsResponses.some(
-      (result) => result.status === 'fulfilled',
+      (result) => result.status === 'fulfilled' && result.value.ok,
     );
     if (anyPositiveLinks) {
       throw new Error(

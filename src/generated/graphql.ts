@@ -30,6 +30,12 @@ export type Game = {
   words: Array<Word>;
 };
 
+export type GameQueryInput = {
+  ownerId?: InputMaybe<Scalars['String']['input']>;
+  releaseMonth?: InputMaybe<Scalars['String']['input']>;
+  word?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   submitGame?: Maybe<Game>;
@@ -53,11 +59,7 @@ export type QueryGameArgs = {
 
 
 export type QueryGamesArgs = {
-  query: QueryObject;
-};
-
-export type QueryObject = {
-  ownerId?: InputMaybe<Scalars['String']['input']>;
+  query: GameQueryInput;
 };
 
 export type User = {
@@ -175,11 +177,11 @@ export type ResolversTypes = {
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   Game: ResolverTypeWrapper<DBGame>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
+  GameQueryInput: GameQueryInput;
+  String: ResolverTypeWrapper<Scalars['String']['output']>;
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']['output']>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
-  String: ResolverTypeWrapper<Scalars['String']['output']>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
-  QueryObject: QueryObject;
   User: ResolverTypeWrapper<User>;
   Word: ResolverTypeWrapper<Word>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
@@ -190,11 +192,11 @@ export type ResolversParentTypes = {
   DateTime: Scalars['DateTime']['output'];
   Game: DBGame;
   ID: Scalars['ID']['output'];
+  GameQueryInput: GameQueryInput;
+  String: Scalars['String']['output'];
   JSONObject: Scalars['JSONObject']['output'];
   Mutation: Record<PropertyKey, never>;
-  String: Scalars['String']['output'];
   Query: Record<PropertyKey, never>;
-  QueryObject: QueryObject;
   User: User | FederationReferenceTypes['User'];
   Word: Word | FederationReferenceTypes['Word'];
   Boolean: Scalars['Boolean']['output'];

@@ -18,7 +18,7 @@ const createGameControllerMock = (
   overrides: Partial<ReturnType<typeof startController>> = {},
 ): ReturnType<typeof startController> => ({
   getById: jest.fn().mockResolvedValue(undefined),
-  listByOwner: jest.fn().mockResolvedValue([]),
+  query: jest.fn().mockResolvedValue([]),
   create: jest.fn().mockResolvedValue(defaultGame),
   update: jest.fn().mockResolvedValue(defaultGame),
   ...overrides,
@@ -102,7 +102,7 @@ describe('Resolvers', () => {
       ] as unknown as DBGame[];
 
       const gameController = createGameControllerMock({
-        listByOwner: jest.fn().mockResolvedValue(results),
+        query: jest.fn().mockResolvedValue(results),
       });
 
       const context: Context = {
@@ -118,7 +118,49 @@ describe('Resolvers', () => {
       );
 
       expect(games).toEqual(results);
-      expect(gameController.listByOwner).toHaveBeenCalledWith('you');
+      expect(gameController.query).toHaveBeenCalledWith({
+        ownerId: 'you',
+        word: undefined,
+        releaseMonth: undefined,
+      });
+    });
+
+    it('uses performant query when releaseMonth is provided', async () => {
+      const results = [
+        {
+          ...defaultGame,
+          id: 'game1',
+          releaseMonth: '2024-01',
+        },
+        {
+          ...defaultGame,
+          id: 'game2',
+          releaseMonth: '2024-01',
+        },
+      ] as unknown as DBGame[];
+
+      const gameController = createGameControllerMock({
+        query: jest.fn().mockResolvedValue(results),
+      });
+
+      const context: Context = {
+        gameController,
+        event: {},
+      };
+
+      const games = await callResolver(
+        resolvers.Query!.games!,
+        {},
+        { query: { releaseMonth: '2024-01' } },
+        context,
+      );
+
+      expect(games).toEqual(results);
+      expect(gameController.query).toHaveBeenCalledWith({
+        ownerId: undefined,
+        word: undefined,
+        releaseMonth: '2024-01',
+      });
     });
   });
 

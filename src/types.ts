@@ -22,6 +22,7 @@ export type DBGame = DynamooseItem & {
   isDraft: boolean;
   looksNaughty: boolean;
   publishDate?: Date;
+  releaseMonth?: string; // Format: YYYY-MM
   createdAt: Date;
   updatedAt: Date;
 };

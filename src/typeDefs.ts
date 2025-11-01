@@ -27,13 +27,15 @@ export default gql`
     updatedAt: DateTime
   }
 
-  input QueryObject {
+  input GameQueryInput {
     ownerId: String
+    word: String
+    releaseMonth: String
   }
 
   type Query {
     game(id: ID!): Game
-    games(query: QueryObject!): [Game]
+    games(query: GameQueryInput!): [Game]
   }
 
   type Mutation {

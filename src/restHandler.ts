@@ -1,6 +1,12 @@
 import serverlessExpress from '@vendia/serverless-express';
-import express from 'express';
+import express, { Request } from 'express';
 import { startController } from './gameController';
+import { GameQueryInput } from './generated/graphql';
+
+// TODO: we need to remap the game into something consumable
+// change ownerIds into an array, and remove wordsKey
+// but only do this if we ever see a service making a rest call that uses those fields
+// otherwise, it's ok that gql !== rest
 
 export const createRestApp = () => {
   const app = express();
@@ -27,12 +33,16 @@ export const createRestApp = () => {
     res.json(game);
   });
 
-  app.get('/games', async (req, res) => {
-    const ownerId = req.query.ownerId || req.header('x-user-id');
-
-    const games = await gameController.listByOwner(ownerId as string);
-    res.json(games);
-  });
+  app.get(
+    '/games',
+    async (
+      req: Request<Record<string, never>, unknown, unknown, GameQueryInput>,
+      res,
+    ) => {
+      const games = await gameController.query(req.query);
+      res.json(games);
+    },
+  );
 
   app.post('/games', async (req, res) => {
     const game = await gameController.create(req.body, req.header('x-user-id'));

@@ -36,6 +36,7 @@ const createGameModelMock = (
 ): GameModelMock => {
   return {
     get: jest.fn().mockReturnThis(),
+    scan: jest.fn().mockReturnThis(),
     query: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     contains: jest.fn().mockReturnThis(),
@@ -94,7 +95,7 @@ describe('game controller', () => {
     });
   });
 
-  describe('.listByOwner(ownerId): Game[]', () => {
+  describe('.query(ownerId): Game[]', () => {
     it('fetches all games containing a given ownerId', async () => {
       const Game = createGameModelMock({
         exec: jest.fn().mockResolvedValue([
@@ -103,13 +104,16 @@ describe('game controller', () => {
         ]),
       });
 
-      const games = await createGameController(Game).listByOwner('owner-123');
+      const games = await createGameController(Game).query({
+        ownerId: 'owner-123',
+      });
       expect(games).toEqual([
         { ...defaultGame, id: 'game1' },
         { ...defaultGame, id: 'game2' },
       ]);
-      expect(Game.query).toHaveBeenCalledWith('ownerIds');
-      expect(Game.contains).toHaveBeenCalledWith('owner-123');
+      expect(Game.scan).toHaveBeenCalledWith({
+        ownerIds: { contains: 'owner-123' },
+      });
     });
 
     it('returns nothing if it is given an unused ownerId', async () => {
@@ -117,7 +121,65 @@ describe('game controller', () => {
         exec: jest.fn().mockResolvedValue([]),
       });
 
-      const games = await createGameController(Game).listByOwner('someguy');
+      const games = await createGameController(Game).query({
+        ownerId: 'someguy',
+      });
+      expect(games).toEqual([]);
+    });
+  });
+
+  describe('.query(query): Game[]', () => {
+    it('uses performant GSI query when releaseMonth is provided', async () => {
+      const Game = createGameModelMock({
+        query: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        using: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([
+          { ...defaultGame, id: 'game1', releaseMonth: '2024-01' },
+          { ...defaultGame, id: 'game2', releaseMonth: '2024-01' },
+        ]),
+      });
+
+      const games = await createGameController(Game).query({
+        releaseMonth: '2024-01',
+      });
+
+      expect(games).toEqual([
+        { ...defaultGame, id: 'game1', releaseMonth: '2024-01' },
+        { ...defaultGame, id: 'game2', releaseMonth: '2024-01' },
+      ]);
+      expect(Game.query).toHaveBeenCalledWith('releaseMonth');
+      expect(Game.eq).toHaveBeenCalledWith('2024-01');
+      expect(Game.using).toHaveBeenCalledWith('releaseMonth');
+    });
+
+    it('falls back to scan when no releaseMonth provided', async () => {
+      const Game = createGameModelMock({
+        exec: jest.fn().mockResolvedValue([{ ...defaultGame, id: 'game1' }]),
+      });
+
+      const games = await createGameController(Game).query({
+        ownerId: 'owner-123',
+      });
+
+      expect(games).toEqual([{ ...defaultGame, id: 'game1' }]);
+      expect(Game.scan).toHaveBeenCalledWith({
+        ownerIds: { contains: 'owner-123' },
+      });
+    });
+
+    it('returns empty array when no games match releaseMonth', async () => {
+      const Game = createGameModelMock({
+        query: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        using: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      });
+
+      const games = await createGameController(Game).query({
+        releaseMonth: '2025-12',
+      });
+
       expect(games).toEqual([]);
     });
   });
