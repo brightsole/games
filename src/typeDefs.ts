@@ -11,7 +11,7 @@ export default gql`
     )
 
   type Word @key(fields: "name") {
-    name: ID! @external
+    name: ID!
   }
 
   # type User @key(fields: "id") @external {
