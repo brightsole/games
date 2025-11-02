@@ -3,7 +3,7 @@
 export default $config({
   app(input) {
     return {
-      name: 'games',
+      name: 'games-service',
       removal: input?.stage === 'production' ? 'retain' : 'remove',
       protect: input?.stage === 'production',
       home: 'aws',
