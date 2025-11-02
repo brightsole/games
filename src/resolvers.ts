@@ -27,12 +27,12 @@ const resolvers: Resolvers<Context> = {
       gameController.getById(id),
 
     words: (parent, _args, _context) =>
-      parent.words.map((word: string) => ({ __typename: 'Word', id: word })),
+      parent.words.map((word: string) => ({ __typename: 'Word', name: word })),
 
-    owners: (parent, _args, _context) =>
-      parent.ownerIds
-        .split('|')
-        .map((ownerId: string) => ({ __typename: 'User', id: ownerId })),
+    // owners: (parent, _args, _context) =>
+    //   parent.ownerIds
+    //     .split('|')
+    //     .map((ownerId: string) => ({ __typename: 'User', id: ownerId })),
   },
 
   DateTime: GraphQLDateTime,

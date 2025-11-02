@@ -24,7 +24,6 @@ export type Game = {
   __typename?: 'Game';
   createdAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
-  owners: Array<User>;
   publicReleaseDate?: Maybe<Scalars['DateTime']['output']>;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
   words: Array<Word>;
@@ -62,14 +61,9 @@ export type QueryGamesArgs = {
   query: GameQueryInput;
 };
 
-export type User = {
-  __typename?: 'User';
-  id: Scalars['ID']['output'];
-};
-
 export type Word = {
   __typename?: 'Word';
-  id: Scalars['ID']['output'];
+  name: Scalars['ID']['output'];
 };
 
 
@@ -153,7 +147,6 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 /** Mapping of federation types */
 export type FederationTypes = {
   Game: Game;
-  User: User;
   Word: Word;
 };
 
@@ -162,12 +155,9 @@ export type FederationReferenceTypes = {
   Game:
     ( { __typename: 'Game' }
     & GraphQLRecursivePick<FederationTypes['Game'], {"id":true}> );
-  User:
-    ( { __typename: 'User' }
-    & GraphQLRecursivePick<FederationTypes['User'], {"id":true}> );
   Word:
     ( { __typename: 'Word' }
-    & GraphQLRecursivePick<FederationTypes['Word'], {"id":true}> );
+    & GraphQLRecursivePick<FederationTypes['Word'], {"name":true}> );
 };
 
 
@@ -182,7 +172,6 @@ export type ResolversTypes = {
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']['output']>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
-  User: ResolverTypeWrapper<User>;
   Word: ResolverTypeWrapper<Word>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
 };
@@ -197,7 +186,6 @@ export type ResolversParentTypes = {
   JSONObject: Scalars['JSONObject']['output'];
   Mutation: Record<PropertyKey, never>;
   Query: Record<PropertyKey, never>;
-  User: User | FederationReferenceTypes['User'];
   Word: Word | FederationReferenceTypes['Word'];
   Boolean: Scalars['Boolean']['output'];
 };
@@ -210,7 +198,6 @@ export type GameResolvers<ContextType = Context, ParentType extends ResolversPar
   __resolveReference?: ReferenceResolver<Maybe<ResolversTypes['Game']> | FederationReferenceType, FederationReferenceType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  owners?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
   publicReleaseDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   updatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   words?: Resolver<Array<ResolversTypes['Word']>, ParentType, ContextType>;

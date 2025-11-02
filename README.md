@@ -2,7 +2,7 @@
 
 [![Auto merge basic check](https://github.com/brightsole/games/actions/workflows/test.yml/badge.svg)](https://github.com/brightsole/games/actions/workflows/test.yml) [![Deploy to Production](https://github.com/brightsole/games/actions/workflows/deploy.yml/badge.svg)](https://github.com/brightsole/games/actions/workflows/deploy.yml)
 
-[preview](https://iwv0i8igpb.execute-api.ap-southeast-2.amazonaws.com/graphql)
+[preview](https://1ftx9xsywk.execute-api.ap-southeast-2.amazonaws.com/graphql)
 
 [production](https://idlpktrbgd.execute-api.ap-southeast-2.amazonaws.com/graphql)
 

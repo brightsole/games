@@ -10,18 +10,18 @@ export default gql`
       import: ["@key", "@shareable", "@external"]
     )
 
-  type Word @key(fields: "id") @external {
-    id: ID!
+  type Word @key(fields: "name") {
+    name: ID! @external
   }
 
-  type User @key(fields: "id") @external {
-    id: ID!
-  }
+  # type User @key(fields: "id") @external {
+  #   id: ID!
+  # }
 
   type Game @key(fields: "id") @shareable {
     id: ID!
     words: [Word!]!
-    owners: [User!]!
+    # owners: [User!]!
     publicReleaseDate: DateTime
     createdAt: DateTime
     updatedAt: DateTime

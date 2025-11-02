@@ -21,11 +21,11 @@ describe('Resolver full path', () => {
         submitGame(words: $words) {
           id
           words {
-            id
+            name
           }
-          owners {
-            id
-          }
+          # owners {
+          #   id
+          # }
         }
       }
     `;
@@ -77,8 +77,7 @@ describe('Resolver full path', () => {
     expect(singleResult.data).toEqual({
       submitGame: {
         id: expect.any(String),
-        words: [{ id: 'cat' }, { id: 'dog' }, { id: 'fish' }],
-        owners: [{ id: ownerId }],
+        words: [{ name: 'cat' }, { name: 'dog' }, { name: 'fish' }],
       },
     });
     expect(create).toHaveBeenCalledWith({ words }, ownerId);
