@@ -53,18 +53,30 @@ export default $config({
       name: `/sst/words-service/${$app.stage}/api-url`,
     });
 
+    const internalAuth = await aws.secretsmanager.getSecretVersionOutput({
+      secretId: `jumpingbeen/${$app.stage}/internal-lockdown`,
+    });
+
+    const authSecrets = internalAuth.secretString.apply((s) => JSON.parse(s!));
+
     const functionConfig = {
-      runtime: 'nodejs22.x',
-      timeout: '20 seconds',
-      memory: '1024 MB',
+      runtime: 'nodejs22.x' as const,
+      timeout: '20 seconds' as const,
+      memory: '1024 MB' as const,
       nodejs: {
-        format: 'esm',
+        format: 'esm' as const,
       },
       environment: {
         TABLE_NAME: gamesTable.name,
         HOPS_API_URL: hopsApiUrl.value,
+        INTERNAL_SECRET_HEADER_NAME: authSecrets.apply(
+          (v) => v.INTERNAL_SECRET_HEADER_NAME,
+        ),
+        INTERNAL_SECRET_HEADER_VALUE: authSecrets.apply(
+          (v) => v.INTERNAL_SECRET_HEADER_VALUE,
+        ),
       },
-    } as const;
+    };
 
     api.route('ANY /graphql', {
       ...functionConfig,

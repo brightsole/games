@@ -86,7 +86,10 @@ export const createGameController = (GameModel: ModelType) => ({
       adjacentPairs.map(([from, to]) =>
         fetch(`${env.hopsApiUrl}/linked`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            [env.authHeaderName]: env.authHeaderValue,
+          },
           body: JSON.stringify({ from, to }),
         }),
       ),

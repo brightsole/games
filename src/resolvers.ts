@@ -4,12 +4,12 @@ import { Resolvers } from './generated/graphql';
 
 const resolvers: Resolvers<Context> = {
   Query: {
-    game: async (_parent, { id }, { gameController }) =>
-      gameController.getById(id),
+    game: (_parent, { id }, { gameController }) =>
+      id ? gameController.getById(id) : null,
 
     // Uses performant GSI query when releaseMonth is provided
     // Otherwise falls back to slow scan with contains filters
-    games: async (
+    games: (
       _parent,
       { query: { ownerId, word, releaseMonth } },
       { gameController },

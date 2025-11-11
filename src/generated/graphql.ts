@@ -53,7 +53,7 @@ export type Query = {
 
 
 export type QueryGameArgs = {
-  id: Scalars['ID']['input'];
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -212,8 +212,13 @@ export type MutationResolvers<ContextType = Context, ParentType extends Resolver
 };
 
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  game?: Resolver<Maybe<ResolversTypes['Game']>, ParentType, ContextType, RequireFields<QueryGameArgs, 'id'>>;
+  game?: Resolver<Maybe<ResolversTypes['Game']>, ParentType, ContextType, Partial<QueryGameArgs>>;
   games?: Resolver<Maybe<Array<Maybe<ResolversTypes['Game']>>>, ParentType, ContextType, RequireFields<QueryGamesArgs, 'query'>>;
+};
+
+export type WordResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Word'] = ResolversParentTypes['Word'], FederationReferenceType extends FederationReferenceTypes['Word'] = FederationReferenceTypes['Word']> = {
+  __resolveReference?: ReferenceResolver<Maybe<ResolversTypes['Word']> | FederationReferenceType, FederationReferenceType, ContextType>;
+  name?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = Context> = {
@@ -222,5 +227,6 @@ export type Resolvers<ContextType = Context> = {
   JSONObject?: GraphQLScalarType;
   Mutation?: MutationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
+  Word?: WordResolvers<ContextType>;
 };
 

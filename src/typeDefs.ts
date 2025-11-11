@@ -34,7 +34,8 @@ export default gql`
   }
 
   type Query {
-    game(id: ID!): Game
+    # no id returns today's game
+    game(id: ID): Game
     games(query: GameQueryInput!): [Game]
   }
 

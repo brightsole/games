@@ -2,6 +2,7 @@ import http from 'node:http';
 import { customAlphabet } from 'nanoid';
 import { startController } from './gameController';
 import { createRestApp } from './restHandler';
+import env from './env';
 
 // good ole motorCase
 const nanoid = customAlphabet('brumBRUM', 24);
@@ -12,9 +13,12 @@ jest.mock('./gameController', () => ({
 
 // Mock dependencies for game controller
 jest.mock('./env', () => ({
+  __esModule: true,
   default: {
     hopsApiUrl: 'http://localhost:3001',
     adminUserId: 'admin-123',
+    authHeaderName: 'x-internal-secret',
+    authHeaderValue: 'test-secret-value-123',
   },
 }));
 
@@ -73,6 +77,7 @@ describe('REST handler', () => {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(payload),
                 'x-user-id': 'owner-1',
+                [env.authHeaderName]: env.authHeaderValue,
               },
             },
             (res) => {
