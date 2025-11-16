@@ -121,21 +121,21 @@ describe('Resolvers', () => {
       expect(gameController.query).toHaveBeenCalledWith({
         ownerId: 'you',
         word: undefined,
-        releaseMonth: undefined,
+        publishMonth: undefined,
       });
     });
 
-    it('uses performant query when releaseMonth is provided', async () => {
+    it('uses performant query when publishMonth is provided', async () => {
       const results = [
         {
           ...defaultGame,
           id: 'game1',
-          releaseMonth: '2024-01',
+          publishMonth: '2024-01',
         },
         {
           ...defaultGame,
           id: 'game2',
-          releaseMonth: '2024-01',
+          publishMonth: '2024-01',
         },
       ] as unknown as DBGame[];
 
@@ -151,7 +151,7 @@ describe('Resolvers', () => {
       const games = await callResolver(
         resolvers.Query!.games!,
         {},
-        { query: { releaseMonth: '2024-01' } },
+        { query: { publishMonth: '2024-01' } },
         context,
       );
 
@@ -159,7 +159,7 @@ describe('Resolvers', () => {
       expect(gameController.query).toHaveBeenCalledWith({
         ownerId: undefined,
         word: undefined,
-        releaseMonth: '2024-01',
+        publishMonth: '2024-01',
       });
     });
   });

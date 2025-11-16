@@ -36,10 +36,10 @@ export const createGameController = (GameModel: ModelType) => ({
   },
 
   query: async (query: GameQueryInput) => {
-    if (query.releaseMonth) {
-      return await GameModel.query('releaseMonth')
-        .eq(query.releaseMonth)
-        .using('releaseMonth')
+    if (query.publishMonth) {
+      return await GameModel.query('publishMonth')
+        .eq(query.publishMonth)
+        .using('publishMonth')
         .exec();
     }
 
@@ -61,14 +61,14 @@ export const createGameController = (GameModel: ModelType) => ({
       : [];
     if (existingGame && existingGameOwnerIds.length >= 3) return existingGame;
     if (existingGame && existingGameOwnerIds.length < 3) {
+      const isReady = existingGameOwnerIds.length + 1 === 3;
       const updatedGame = await GameModel.update(
         { id: existingGame.id },
         {
           ownerIds: [...existingGameOwnerIds, ownerId].join('|'),
-          isDraft:
-            existingGameOwnerIds.length + 1 === 3
-              ? false
-              : existingGame.isDraft,
+          status: isReady ? 'ready' : 'draft',
+          // should ensure uniqueness while telling us when it was readied up
+          ...(isReady && { publishMonth: `READY-${Date.now()}` }),
         },
         {
           returnValues: 'ALL_NEW',
@@ -116,9 +116,8 @@ export const createGameController = (GameModel: ModelType) => ({
         ownerIds: ownerId,
         wordsKey,
         words: normalizedWords,
-        isDraft: true,
         looksNaughty: filter.isProfane(normalizedWords.join(' ')),
-        // publishDate set by cron scanner TODO
+        status: 'draft',
       },
       {
         overwrite: false,

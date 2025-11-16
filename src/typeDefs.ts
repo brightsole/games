@@ -22,7 +22,7 @@ export default gql`
     id: ID!
     words: [Word!]!
     # owners: [User!]!
-    publicReleaseDate: DateTime
+    publishDate: DateTime
     createdAt: DateTime
     updatedAt: DateTime
   }
@@ -30,7 +30,7 @@ export default gql`
   input GameQueryInput {
     ownerId: String
     word: String
-    releaseMonth: String
+    publishMonth: String
   }
 
   type Query {

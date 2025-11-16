@@ -11,17 +11,6 @@ jest.mock('./gameController', () => ({
   startController: jest.fn(),
 }));
 
-// Mock dependencies for game controller
-jest.mock('./env', () => ({
-  __esModule: true,
-  default: {
-    hopsApiUrl: 'http://localhost:3001',
-    adminUserId: 'admin-123',
-    authHeaderName: 'x-internal-secret',
-    authHeaderValue: 'test-secret-value-123',
-  },
-}));
-
 global.fetch = jest.fn();
 
 const mockStartController = jest.mocked(startController);

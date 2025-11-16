@@ -24,14 +24,14 @@ export type Game = {
   __typename?: 'Game';
   createdAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
-  publicReleaseDate?: Maybe<Scalars['DateTime']['output']>;
+  publishDate?: Maybe<Scalars['DateTime']['output']>;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
   words: Array<Word>;
 };
 
 export type GameQueryInput = {
   ownerId?: InputMaybe<Scalars['String']['input']>;
-  releaseMonth?: InputMaybe<Scalars['String']['input']>;
+  publishMonth?: InputMaybe<Scalars['String']['input']>;
   word?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -198,7 +198,7 @@ export type GameResolvers<ContextType = Context, ParentType extends ResolversPar
   __resolveReference?: ReferenceResolver<Maybe<ResolversTypes['Game']> | FederationReferenceType, FederationReferenceType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  publicReleaseDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  publishDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   updatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   words?: Resolver<Array<ResolversTypes['Word']>, ParentType, ContextType>;
 };

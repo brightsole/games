@@ -9,7 +9,17 @@ export default new Schema(
     }, // yes i'm aware it's plural, we smash ids together
     // we should never have more than 3 user ids per game
     id: { type: String, hashKey: true, required: true },
-    isDraft: { type: Boolean, required: true, default: true },
+    status: {
+      type: String,
+      required: true,
+      default: 'draft',
+      enum: ['draft', 'ready', 'published'],
+      index: {
+        name: 'status',
+        type: 'global',
+        rangeKey: 'publishMonth',
+      },
+    },
     looksNaughty: { type: Boolean, required: true, default: false },
     wordsKey: {
       type: String,
@@ -20,10 +30,10 @@ export default new Schema(
       type: Date,
       required: false,
     },
-    releaseMonth: {
+    publishMonth: {
       type: String,
       required: false,
-      index: { name: 'releaseMonth', type: 'global' },
+      index: { name: 'publishMonth', type: 'global' },
     }, // Format: YYYY-MM for efficient querying by month
     words: {
       type: Array,

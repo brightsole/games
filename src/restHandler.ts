@@ -67,6 +67,24 @@ export const createRestApp = () => {
     res.json(game);
   });
 
+  // /* TODO REMOVE: only for testing purposes */
+  // app.get('/games/schedule/preview', async (_req, res) => {
+  //   const { handler: previewScheduler } = await import(
+  //     './gameApprover/preview'
+  //   );
+  //   const result = await previewScheduler();
+  //   res.json(result);
+  // });
+
+  // /* TODO REMOVE: only for testing purposes */
+  // app.get('/games/schedule/production', async (_req, res) => {
+  //   const { handler: productionScheduler } = await import(
+  //     './gameApprover/production'
+  //   );
+  //   const result = await productionScheduler();
+  //   res.json(result);
+  // });
+
   // deleting would be dumb; people could just put it back
   // and unpublishing is also bad, because then people lose their games
 

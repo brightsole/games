@@ -7,12 +7,6 @@ jest.mock('bad-words', () => ({
   })),
 }));
 
-jest.mock('bad-words', () => ({
-  Filter: jest.fn().mockImplementation(() => ({
-    isProfane: jest.fn().mockReturnValue(false),
-  })),
-}));
-
 jest.mock('./sanitize', () => ({
   normalizeWord: jest.fn((word: string) => word.toLowerCase()),
 }));
@@ -54,7 +48,7 @@ const defaultGame = {
   ownerIds: 'owner-123',
   wordsKey: 'cat|dog|fish',
   words: ['cat', 'dog', 'fish'],
-  isDraft: true,
+  status: 'draft',
   looksNaughty: false,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-01-02T00:00:00.000Z'),
@@ -129,31 +123,28 @@ describe('game controller', () => {
   });
 
   describe('.query(query): Game[]', () => {
-    it('uses performant GSI query when releaseMonth is provided', async () => {
+    it('uses performant GSI query when publishMonth is provided', async () => {
       const Game = createGameModelMock({
-        query: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        using: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue([
-          { ...defaultGame, id: 'game1', releaseMonth: '2024-01' },
-          { ...defaultGame, id: 'game2', releaseMonth: '2024-01' },
+          { ...defaultGame, id: 'game1', publishMonth: '2024-01' },
+          { ...defaultGame, id: 'game2', publishMonth: '2024-01' },
         ]),
       });
 
       const games = await createGameController(Game).query({
-        releaseMonth: '2024-01',
+        publishMonth: '2024-01',
       });
 
       expect(games).toEqual([
-        { ...defaultGame, id: 'game1', releaseMonth: '2024-01' },
-        { ...defaultGame, id: 'game2', releaseMonth: '2024-01' },
+        { ...defaultGame, id: 'game1', publishMonth: '2024-01' },
+        { ...defaultGame, id: 'game2', publishMonth: '2024-01' },
       ]);
-      expect(Game.query).toHaveBeenCalledWith('releaseMonth');
+      expect(Game.query).toHaveBeenCalledWith('publishMonth');
       expect(Game.eq).toHaveBeenCalledWith('2024-01');
-      expect(Game.using).toHaveBeenCalledWith('releaseMonth');
+      expect(Game.using).toHaveBeenCalledWith('publishMonth');
     });
 
-    it('falls back to scan when no releaseMonth provided', async () => {
+    it('falls back to scan when no publishMonth provided', async () => {
       const Game = createGameModelMock({
         exec: jest.fn().mockResolvedValue([{ ...defaultGame, id: 'game1' }]),
       });
@@ -168,16 +159,13 @@ describe('game controller', () => {
       });
     });
 
-    it('returns empty array when no games match releaseMonth', async () => {
+    it('returns empty array when no games match publishMonth', async () => {
       const Game = createGameModelMock({
-        query: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        using: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue([]),
       });
 
       const games = await createGameController(Game).query({
-        releaseMonth: '2025-12',
+        publishMonth: '2025-12',
       });
 
       expect(games).toEqual([]);
@@ -187,9 +175,6 @@ describe('game controller', () => {
   describe('.create(input, ownerId): Game', () => {
     it('creates a new game when no existing game found', async () => {
       const Game = createGameModelMock({
-        query: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        using: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue([]), // no existing game
         create: jest.fn().mockResolvedValue(defaultGame),
       });
@@ -209,7 +194,7 @@ describe('game controller', () => {
           ownerIds: 'owner-123',
           wordsKey: 'cat|dog|fish',
           words: ['cat', 'dog', 'fish'],
-          isDraft: true,
+          status: 'draft',
           looksNaughty: false,
         }),
         { overwrite: false },
@@ -220,18 +205,15 @@ describe('game controller', () => {
       const existingGame = {
         ...defaultGame,
         ownerIds: 'owner-1',
-        isDraft: true,
+        status: 'draft' as const,
       };
       const updatedGame = {
         ...existingGame,
         ownerIds: 'owner-1|owner-123',
-        isDraft: true,
+        status: 'draft' as const,
       };
 
       const Game = createGameModelMock({
-        query: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        using: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue([existingGame]),
         update: jest.fn().mockResolvedValue(updatedGame),
       });
@@ -246,7 +228,42 @@ describe('game controller', () => {
         { id: existingGame.id },
         {
           ownerIds: 'owner-1|owner-123',
-          isDraft: true,
+          status: 'draft',
+        },
+        { returnValues: 'ALL_NEW' },
+      );
+    });
+
+    it('sets status to ready and adds READY- publishMonth when third owner joins', async () => {
+      const existingGame = {
+        ...defaultGame,
+        ownerIds: 'owner-1|owner-2',
+        status: 'draft' as const,
+      };
+      const updatedGame = {
+        ...existingGame,
+        ownerIds: 'owner-1|owner-2|owner-123',
+        status: 'ready' as const,
+        publishMonth: expect.stringMatching(/^READY-\d+$/),
+      };
+
+      const Game = createGameModelMock({
+        exec: jest.fn().mockResolvedValue([existingGame]),
+        update: jest.fn().mockResolvedValue(updatedGame),
+      });
+
+      const game = await createGameController(Game).create(
+        { words: ['cat', 'dog', 'fish'] },
+        'owner-123',
+      );
+
+      expect(game).toEqual(updatedGame);
+      expect(Game.update).toHaveBeenCalledWith(
+        { id: existingGame.id },
+        {
+          ownerIds: 'owner-1|owner-2|owner-123',
+          status: 'ready',
+          publishMonth: expect.stringMatching(/^READY-\d+$/),
         },
         { returnValues: 'ALL_NEW' },
       );
@@ -256,13 +273,10 @@ describe('game controller', () => {
       const fullGame = {
         ...defaultGame,
         ownerIds: 'owner-1|owner-2|owner-3',
-        isDraft: false,
+        status: 'ready' as const,
       };
 
       const Game = createGameModelMock({
-        query: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        using: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue([fullGame]),
       });
 
@@ -278,9 +292,6 @@ describe('game controller', () => {
 
     it('throws error when words are directly linked', async () => {
       const Game = createGameModelMock({
-        query: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        using: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue([]), // no existing game
       });
 
@@ -309,20 +320,20 @@ describe('game controller', () => {
       const Game = createGameModelMock({
         update: jest.fn().mockResolvedValue({
           ...defaultGame,
-          isDraft: false,
+          status: 'published',
         }),
       });
 
       const game = await createGameController(Game).update(
         'bRUMbrumBRUM',
-        { isDraft: false },
+        { status: 'published' },
         'test-guy',
       );
 
-      expect(game).toEqual({ ...defaultGame, isDraft: false });
+      expect(game).toEqual({ ...defaultGame, status: 'published' });
       expect(Game.update).toHaveBeenCalledWith(
         { id: 'bRUMbrumBRUM' },
-        { isDraft: false },
+        { status: 'published' },
         expect.objectContaining({ returnValues: 'ALL_NEW' }),
       );
     });
@@ -333,7 +344,7 @@ describe('game controller', () => {
       await expect(
         createGameController(Game).update(
           'bRUMbrumBRUM',
-          { isDraft: false },
+          { status: 'published' },
           'regular-user',
         ),
       ).rejects.toThrow('Only admin can update games');
@@ -345,7 +356,7 @@ describe('game controller', () => {
       await expect(
         createGameController(Game).update(
           'bRUMbrumBRUM',
-          { isDraft: false },
+          { status: 'published' },
           undefined,
         ),
       ).rejects.toThrow('Only admin can update games');

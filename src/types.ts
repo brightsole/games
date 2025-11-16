@@ -16,13 +16,13 @@ export interface LambdaContextFunctionArgument {
 
 export type DBGame = DynamooseItem & {
   id: string;
+  status: 'draft' | 'ready' | 'published';
   ownerIds: string;
   wordsKey: string;
   words: string[];
-  isDraft: boolean;
   looksNaughty: boolean;
   publishDate?: Date;
-  releaseMonth?: string; // Format: YYYY-MM
+  publishMonth?: string; // Format: YYYY-MM
   createdAt: Date;
   updatedAt: Date;
 };

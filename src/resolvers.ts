@@ -7,13 +7,13 @@ const resolvers: Resolvers<Context> = {
     game: (_parent, { id }, { gameController }) =>
       id ? gameController.getById(id) : null,
 
-    // Uses performant GSI query when releaseMonth is provided
+    // Uses performant GSI query when publishMonth is provided
     // Otherwise falls back to slow scan with contains filters
     games: (
       _parent,
-      { query: { ownerId, word, releaseMonth } },
+      { query: { ownerId, word, publishMonth } },
       { gameController },
-    ) => gameController.query({ ownerId, word, releaseMonth }),
+    ) => gameController.query({ ownerId, word, publishMonth }),
   },
 
   Mutation: {

@@ -15,19 +15,42 @@ export default $config({
         id: 'string',
         ownerIds: 'string',
         wordsKey: 'string',
-        releaseMonth: 'string',
+        publishMonth: 'string',
+        status: 'string',
       },
       primaryIndex: { hashKey: 'id' },
       globalIndexes: {
         ownerIds: { hashKey: 'ownerIds' },
         wordsKey: { hashKey: 'wordsKey' },
-        releaseMonth: { hashKey: 'releaseMonth' },
+        publishMonth: { hashKey: 'publishMonth' },
+        status: { hashKey: 'status', rangeKey: 'publishMonth' },
       },
       deletionProtection: $app.stage === 'production',
     });
 
     const api = new sst.aws.ApiGatewayV2('Api', {
       link: [gamesTable],
+    });
+
+    // Daily cron job to schedule unpublished games
+    new sst.aws.Cron('PublishGames', {
+      // Run at 2am UTC daily
+      schedule: 'cron(0 2 * * ? *)',
+      job: {
+        handler:
+          $app.stage === 'production'
+            ? 'src/gameApprover/production.handler'
+            : 'src/gameApprover/preview.handler',
+        runtime: 'nodejs22.x',
+        timeout: '5 minutes',
+        memory: '512 MB',
+        nodejs: {
+          format: 'esm',
+        },
+        environment: {
+          TABLE_NAME: gamesTable.name,
+        },
+      },
     });
 
     // new sst.aws.Cron('KeepWarmCron', {
